@@ -16,6 +16,7 @@ This file records that work as required by the assignment. I remain responsible 
 | D | Iterators, generators, file loading, timing, and synthetic menu data |
 | E | The full demo, package files, README, and local verification |
 | Writing | A simpler personal introduction and shorter comments, without changing the business logic |
+| Presentation | Terminal section headings, aligned business tables, clearer rejection messages, and a final summary |
 
 The project stays within the course material. It has no real card data, payment service, or Tabit connection.
 
@@ -55,6 +56,12 @@ The schema is `id`, `category`, `name`, `price_cents`, and `available`. Category
 The output has 18 valid JSON objects on 18 lines, unique IDs 1-18, 12 foods, 6 drinks, two unavailable items, positive integer prices, and one 1901-cent item. No generated record needed correction.
 
 Separate invalid examples checked duplicate IDs, malformed JSON, missing/extra fields, blank/non-object lines, invalid categories, bad IDs, empty names, noninteger prices, and invalid availability. The loader rejected them with a line number and closed the file. A tracked file object also confirmed that neither `read` nor `readlines` was used. These invalid examples were not put in the project dataset.
+
+## Terminal presentation
+
+Codex helped format the existing demonstration with simple print statements, loops, and f-strings. The menu, ordered items, diner balances, mock receipts, and local POS state now appear in aligned tables. The terminal output retains the required technical demonstrations and expected validation failures. No graphical interface or external package was added.
+
+The complete demo passed after these changes with the same item total of 16501 cents, tips of 1029 cents, zero unpaid balance, and closed table. All 243 existing checks, the 160 invalid-identifier operations, and the 800 allocation/settlement scenarios also passed again.
 
 ## Code verification
 

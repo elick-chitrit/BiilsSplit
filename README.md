@@ -174,6 +174,8 @@ Run from the repository root so `data/sample_data.jsonl` can be found. The demo 
 
 The run shows the menu, table membership, orders, validation, collections, both queues, independent iterators, generators, the two-result pipeline, timed operations, mock payments, and a later order.
 
+The terminal output has eight numbered sections and aligned tables for the menu, ordered items and participants, diner shares/paid amounts/balances, mock receipts, and local POS status. Expected validation failures are marked `PASS - Rejected`, followed by the reason. The final `DEMO COMPLETE` section shows the closed table, total item bill, zero unpaid balance, and mock tips. All values are still produced by the same business model.
+
 Diners A-D initially owe **32.51, 78.00, 37.50, and 0.00**. The shared 19.01 starter splits into 9.51 and 9.50. After an extra 17.00 drink, the item total is **165.01**, unpaid balances are **0.00**, tips total **10.29**, and the table closes. The diner who did not consume anything is never charged. Printed rejection messages are intentional examples of invalid inputs.
 
 ## Local Tabit simulation
