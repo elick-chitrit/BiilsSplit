@@ -132,6 +132,7 @@ class Restaurant:
         self._menu[item.id] = item
 
     def find_menu_item(self, item_id):
+        _integer(item_id, "Menu item ID")
         item = self._menu.get(item_id)
         if item is None:
             raise ValueError("Menu item does not exist in this restaurant.")
@@ -148,6 +149,7 @@ class Restaurant:
         self._tables[table.id] = table
 
     def find_table(self, table_id):
+        _integer(table_id, "Table ID")
         table = self._tables.get(table_id)
         if table is None:
             raise ValueError("Table does not exist in this restaurant.")
@@ -444,6 +446,7 @@ class Order:
         item._order = self
 
     def find_item(self, item_id):
+        _integer(item_id, "Order item ID")
         item = self._items.get(item_id)
         if item is None:
             raise ValueError("Order item does not exist in this order.")
@@ -653,6 +656,7 @@ class TableSession:
         self._diners[diner.id] = diner
 
     def find_diner(self, diner_id):
+        _integer(diner_id, "Diner ID")
         diner = self._diners.get(diner_id)
         if diner is None:
             raise ValueError("Diner does not exist in this session.")
@@ -680,6 +684,7 @@ class TableSession:
             item._session = self
 
     def find_item(self, item_id):
+        _integer(item_id, "Order item ID")
         for item in self.items:
             if item.id == item_id:
                 return item
