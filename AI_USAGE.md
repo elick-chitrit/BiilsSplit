@@ -27,6 +27,7 @@ The project stays within the course material. It has no real card data, payment 
 - Queues reject duplicates, handle ties and empty/stale requests, and do not automatically mark selected items as served.
 - The proposal was shortened, then moved into README. All nine sections remain there, with no duplicate proposal file.
 - The final Part B review added `display_price` to MenuItem and `has_active_payment_method` to Diner. Together with `from_dict`, these give each class two required OOP tools. The price property is used in item descriptions, and the payment property is used at checkout.
+- A later review found that some model lookups treated `True` and `1.0` as ID 1. Five lookup methods now use the existing integer validator before searching. Invalid identifiers raise `ValueError` before changing participation, queues, or payments. The demo includes rejected boolean and floating-point identifiers.
 
 ## Data-generation request
 
@@ -65,7 +66,8 @@ All verification below ran under Python 3.13.7 on 2026-10-04:
 - The full `main.py` run passed, including expected initial balances of 3251, 7800, 3750, and 0 cents. After a later 1700-cent drink, the final item total is 16501 cents, tips are 1029 cents, all items are served and mock-paid, and the table is closed.
 - The pipeline trace confirms that two results require items 1-4 only. Items 5 and 6 are not inspected.
 - After the final model changes, all 138 model/processing checks and 105 Part D checks passed again, along with the full demo. Focused checks covered inherited display prices, price updates, and missing, active, and inactive mock payment methods.
+- After the identifier correction, the 138 model/processing checks and 105 Part D checks passed again. A separate regression script rejected 160 invalid-identifier operations with `ValueError` and unchanged state, and checked valid and missing positive IDs. It also ran 800 allocation/settlement scenarios with amounts of 1-100 cents and 1-8 participants. The full demo passed with the new rejection examples.
 
-Codex ran the development checks. The verification scripts are in its working directory (`work/verify_parts_bc.py` and `work/verify_part_d.py`), outside the academic repository. `main.py` is the reproducible project demonstration. Python 3.10 is the declared minimum, but it was not separately run in this environment.
+Codex ran the development checks. The verification scripts are in its working directory (`work/verify_parts_bc.py`, `work/verify_part_d.py`, and `work/verify_identifier_fix.py`), outside the academic repository. `main.py` is the reproducible project demonstration. Python 3.10 is the declared minimum, but it was not separately run in this environment.
 
 The final writing pass changes the introduction, wording, comments, and long dashes. The executable code is checked against its previous version, and the demo is run again. The completed code, data, and documentation are committed and pushed. Codex checked the final changes in [Pull Request #1](https://github.com/elick-chitrit/BiilsSplit/pull/1) and merged them into `main` after my approval. Instructor access and actual submission still need to be completed.
