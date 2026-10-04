@@ -66,6 +66,17 @@ def show_balances(session):
     print("  Item amounts exclude tips. Nonparticipants owe zero.")
 
 
+def show_payments(session):
+    print(f"\n  {'Receipt':<8} {'Diner':<12} {'Items':>8} {'Tip':>8} {'Total':>8}")
+    print("  " + "-" * 48)
+    for payment in session.payments:
+        name = session.find_diner(payment.diner_id).name
+        print(f"  {payment.id:<8} {name:<12} {payment.amount_cents / 100:>8.2f} {payment.tip_cents / 100:>8.2f} {payment.total_cents / 100:>8.2f}")
+    print("\n  Paid item shares per receipt (line ID: cents):")
+    for payment in session.payments:
+        print(f"  Receipt {payment.id}: {payment.item_allocations}")
+
+
 def show_pos_view(session):
     snapshot = local_pos_snapshot(session)
     print(f"\n  Local POS view | Table {snapshot['table_id']} | {snapshot['session_status'].upper()}")
@@ -117,7 +128,9 @@ def main():
             session.associate_diner(item_id, diner_id)
     print(f"  {order}; participants in shared starter: {len(session.find_item(4))}")
     show_order(order)
-    print(f"  Polymorphic preparation destinations: {order.preparation_requests()}")
+    print("\n  Polymorphic preparation destinations:")
+    for item_id, area in order.preparation_requests():
+        print(f"  Line {item_id}: {area}")
     print("  Starter shares in cents:", [session.find_item(4).share_cents(session.find_diner(i)) for i in (1, 2)])
     show_balances(session)
     assert [session.diner_owed_cents(i) for i in (1, 2, 3, 4)] == [3251, 7800, 3750, 0]
@@ -215,8 +228,8 @@ def main():
     print("  Tip options:", MockPayment.TIP_OPTIONS)
     print("  Percentage tips on 10.00:", {rate: MockPayment.calculate_tip(1000, rate) for rate in (10, 12, 15, 20)})
     for payment_id, diner_id, choice, manual in [(1, 1, 10, None), (2, 2, "Other", 500), (3, 3, "None", None)]:
-        payment = session.pay(payment_id, diner_id, choice, manual)
-        print(f"  {payment}; settled item cents: {payment.item_allocations}")
+        session.pay(payment_id, diner_id, choice, manual)
+    show_payments(session)
     assert session.outstanding_cents == 0
     expected_rejection("changing paid participation", lambda: session.find_item(1).remove_diner(session.find_diner(1)))
 
@@ -229,7 +242,9 @@ def main():
     assert session.item_payment_status(7) == "unpaid"
     print("  Earlier personal drink:", session.item_payment_status(2))
     print("  New drink:", session.item_payment_status(7))
-    print("  Later receipt:", session.pay(4, 1, 12))
+    later_payment = session.pay(4, 1, 12)
+    print(f"  New mock payment recorded: receipt {later_payment.id}")
+    show_payments(session)
     show_balances(session)
     assert session.diner_owed_cents(4) == 0
     for item in session.items:
@@ -239,7 +254,14 @@ def main():
     show_pos_view(session)
     assert session.outstanding_cents == 0 and session.total_cents == 16501
     assert session.tips_cents == 1029 and table.active_session is None
-    print("\nDemonstration complete: table closed, item balance 0.00, synthetic tips 10.29.")
+    print("\n" + "=" * 68)
+    print("DEMO COMPLETE")
+    print("=" * 68)
+    print(f"  Table state:      {session.status.upper()}")
+    print(f"  Total item bill:  {session.total_cents / 100:>8.2f}")
+    print(f"  Unpaid items:     {session.outstanding_cents / 100:>8.2f}")
+    print(f"  Mock tips:        {session.tips_cents / 100:>8.2f}")
+    print("  Diner D consumed no items and was never charged.")
 
 
 if __name__ == "__main__":
