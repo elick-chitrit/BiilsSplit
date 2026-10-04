@@ -47,7 +47,7 @@ Connect to Tabit in a later course stage, subject to authorized access and suppo
 | C - Collections and processing | Implemented |
 | D - Iterators, generators, loading, context manager | Implemented |
 | E - Structure and full demo | Implemented; the full run passed |
-| F - Git/GitHub | Code, data, and documentation are committed and pushed; final submission checks remain |
+| F - Git/GitHub | Changes pushed and final model updates reviewed and merged through PR #1; instructor access and submission remain |
 | G - AI data and documentation | 18 synthetic records and usage documentation are included |
 
 ## Files
@@ -188,9 +188,10 @@ The model/processing checks passed 138 checks, and Part D passed another 105. Th
 
 The project files are in GitHub. I keep changes small and make a commit and push after each completed, verified task, including separate meaningful changes in the same file. The target is at least nine meaningful commits; the course requires at least seven.
 
+The final model updates were checked in [Pull Request #1](https://github.com/elick-chitrit/BiilsSplit/pull/1) and merged into `main`. The history exceeds nine meaningful commits. The original commits were preserved during the merge.
+
 Before submission:
 
-- Confirm the Git history contains at least nine meaningful commits and that the latest version is pushed.
-- Review the changes in a pull request, as referenced in the rubric.
 - Give the instructor access to the currently private repository.
-- Include `git log --oneline --graph --all` in the submission.
+- Include the current `git log --oneline --graph --all` output in the submission.
+- Submit the repository link and required materials through the course submission system.
