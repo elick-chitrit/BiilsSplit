@@ -2,6 +2,8 @@
 
 **Elick Chitrit**
 
+[Hebrew guide: running the demo and reading the output](GUIDE_HE.md)
+
 A few years ago, I came up with the idea for BillsSplit after running into a problem at restaurant dinners with a large group of friends: figuring out who should pay for what. Some people shared dishes, others ordered for themselves, and splitting the bill equally did not always make sense.
 
 The goal is simple: each person should pay for what they actually ate or drank. If they shared something, they pay their share. If they did not have it, they should not pay for it.
@@ -63,6 +65,7 @@ Connect to Tabit in a later course stage, subject to authorized access and suppo
 | `bills_split/__init__.py` | The package initializer |
 | `data/sample_data.jsonl` | 18 synthetic menu records |
 | `README.md` | Proposal, design choices, and run instructions |
+| `GUIDE_HE.md` | A short Hebrew companion guide to running the demo and understanding its output |
 | `AI_USAGE.md` | Tools used, data-generation request, and verification |
 | `.gitignore` | Files that should stay out of Git |
 | `pyproject.toml` | Project metadata, Python requirement, and an empty dependency list |

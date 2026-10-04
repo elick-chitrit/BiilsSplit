@@ -17,6 +17,7 @@ This file records that work as required by the assignment. I remain responsible 
 | E | The full demo, package files, README, and local verification |
 | Writing | A simpler personal introduction and shorter comments, without changing the business logic |
 | Presentation | Terminal section headings, aligned business tables, clearer rejection messages, and a final summary |
+| Hebrew guide | A Hebrew companion explanation of the run command, displayed columns, expected rejections, and final results |
 
 The project stays within the course material. It has no real card data, payment service, or Tabit connection.
 
