@@ -20,7 +20,8 @@ def expected_rejection(label, action):
     try:
         action()
     except ValueError as error:
-        print(f"  Rejected {label}: {error}")
+        print(f"  PASS - Rejected {label}")
+        print(f"         {error}")
     else:
         raise AssertionError(f"Expected rejection: {label}")
 
@@ -32,25 +33,61 @@ def trace_demo_items(items, visited):
         yield item
 
 
+def show_section(number, title):
+    print("\n" + "=" * 68)
+    print(f"{number}. {title}")
+    print("=" * 68)
+
+
+def show_menu(session):
+    print(f"  {'ID':<4} {'Menu item':<24} {'Price':>8}  {'Availability':<12}")
+    print("  " + "-" * 52)
+    for item in session.menu:
+        availability = "Available" if item.available else "Unavailable"
+        print(f"  {item.id:<4} {item.name:<24} {item.display_price:>8}  {availability:<12}")
+
+
+def show_order(order):
+    print(f"\n  {'Line':<4} {'Ordered item':<22} {'Qty':>3} {'Total':>8}  Shared by")
+    print("  " + "-" * 64)
+    for item in order.items:
+        names = ", ".join(diner.name for diner in item.participants)
+        print(f"  {item.id:<4} {item.menu_item.name:<22} {item.quantity:>3} {item.total_cents / 100:>8.2f}  {names}")
+
+
 def show_balances(session):
+    print(f"\n  {'Diner':<14} {'Item share':>10} {'Paid':>10} {'Still owed':>10}")
+    print("  " + "-" * 47)
     for diner in session.diners:
-        amount = session.diner_owed_cents(diner.id)
-        print(f"  {diner.name}: {amount / 100:.2f}")
+        subtotal = session.diner_subtotal_cents(diner.id)
+        owed = session.diner_owed_cents(diner.id)
+        paid = subtotal - owed
+        print(f"  {diner.name:<14} {subtotal / 100:>10.2f} {paid / 100:>10.2f} {owed / 100:>10.2f}")
+    print("  Item amounts exclude tips. Nonparticipants owe zero.")
 
 
 def show_pos_view(session):
     snapshot = local_pos_snapshot(session)
-    print(f"  Local POS view: {snapshot['mode']}, table {snapshot['table_id']}, {snapshot['session_status']}")
+    print(f"\n  Local POS view | Table {snapshot['table_id']} | {snapshot['session_status'].upper()}")
+    print(f"  Mode: {snapshot['mode']} (Tabit target)")
+    print(f"  {'Line':<4} {'Item':<22} {'Fulfillment':<12} {'Payment':<20}")
+    print("  " + "-" * 61)
     for item in snapshot['items']:
-        print(f"  Item {item['id']}: {item['fulfillment_status']}, {item['payment_status']}")
-    print(f"  Outstanding: {snapshot['outstanding_cents'] / 100:.2f}; tips: {snapshot['tips_cents'] / 100:.2f}")
+        name = session.find_item(item['id']).menu_item.name
+        print(f"  {item['id']:<4} {name:<22} {item['fulfillment_status']:<12} {item['payment_status']:<20}")
+    print(f"\n  Item total:  {snapshot['total_cents'] / 100:>8.2f}")
+    print(f"  Still owed:  {snapshot['outstanding_cents'] / 100:>8.2f}")
+    print(f"  Tips:        {snapshot['tips_cents'] / 100:>8.2f}")
 
 
 def main():
+    print("=" * 68)
     print("BillsSplit - Stage 1 local demonstration")
-    print("Synthetic data and payments; no real QR scanner, Tabit connection, or payment API.\n")
+    print("Each diner pays only for the items they consumed or shared.")
+    print("=" * 68)
+    print("Synthetic menu and mock payments. QR and Tabit are simulated locally.")
 
-    print("1. Load the synthetic menu and open a table")
+    show_section(1, "Menu and table setup")
     with OperationTimer("load restaurant menu") as load_timer:
         repository = MenuRepository.from_jsonl("data/sample_data.jsonl")
     print(f"  Loaded {len(repository)} validated menu items; timer completed: {load_timer.completed}")
@@ -61,8 +98,7 @@ def main():
     restaurant.add_table(table)
     session = table.open_session(1)
     print(f"  {table}; join reference: {table.qr_label}")
-    for item in session.menu:
-        print(f"  {item} ({'available' if item.available else 'unavailable'})")
+    show_menu(session)
     print(f"  Debug representation: {repository.find(1)!r}")
     print(f"  Missing valid menu ID returns: {repository.find(999)}")
 
@@ -70,7 +106,7 @@ def main():
         method = MockPaymentMethod(diner_id, diner_id)
         session.join(Diner.from_dict({"id": diner_id, "name": name}, method))
 
-    print("\n2. Place an order, allocate only consumed items, and validate inputs")
+    show_section(2, "Orders, shared items, and validation")
     order = Order.from_dict({"id": 1})
     for item_id, menu_id in [(1, 1), (2, 13), (3, 2), (4, 12), (5, 14), (6, 3)]:
         order.add_item(OrderItem.from_dict({"id": item_id, "quantity": 1}, repository.find(menu_id)))
@@ -80,11 +116,13 @@ def main():
         for diner_id in diner_ids:
             session.associate_diner(item_id, diner_id)
     print(f"  {order}; participants in shared starter: {len(session.find_item(4))}")
+    show_order(order)
     print(f"  Polymorphic preparation destinations: {order.preparation_requests()}")
     print("  Starter shares in cents:", [session.find_item(4).share_cents(session.find_diner(i)) for i in (1, 2)])
     show_balances(session)
     assert [session.diner_owed_cents(i) for i in (1, 2, 3, 4)] == [3251, 7800, 3750, 0]
     assert sum(session.diner_subtotal_cents(i) for i in (1, 2, 3, 4)) == session.total_cents
+    print("\n  Validation examples (expected rejections):")
     original_price = repository.find(1).price_cents
     expected_rejection("a zero menu price", lambda: setattr(repository.find(1), "price_cents", 0))
     assert repository.find(1).price_cents == original_price
@@ -98,7 +136,7 @@ def main():
     expected_rejection("duplicate menu ID", lambda: repository.add(repository.find(1)))
     expected_rejection("closure before settlement", session.close)
 
-    print("\n3. Collections, grouping, and sorting")
+    show_section(3, "Collections, grouping, and sorting")
     indexed = index_items(session)
     print(f"  Indexed line 2: {indexed[2]}; missing ID: {indexed.get(999)}")
     for area, items in group_pending_by_area(session).items():
@@ -111,7 +149,7 @@ def main():
     print("  Named-key preparation sort:", [item.id for item in sorted_preparation_items(session)])
     print("  Lambda balance sort:", sorted_diner_balances(session))
 
-    print("\n4. Alternative FIFO and priority preparation workflows")
+    show_section(4, "FIFO and priority preparation queues")
     fifo = PreparationQueue(session)
     for item_id in (2, 3, 4):
         fifo.enqueue(item_id)
@@ -129,7 +167,7 @@ def main():
     # Serve one item so the generator can skip it.
     session.find_item(1).advance_status()
     session.find_item(1).advance_status()
-    print("\n5. Independent iterators, yield, and lazy pipeline")
+    show_section(5, "Independent iterators and lazy processing")
     collection = OrderItemCollection(session.items)
     first, second = iter(collection), iter(collection)
     print(f"  First iterator: {next(first).id}, {next(first).id}; second: {next(second).id}")
@@ -157,7 +195,7 @@ def main():
     print("  Inspected source IDs:", visited, "; unprocessed IDs: [5, 6]")
     assert requests == ((3, 1), (4, 1)) and visited == [1, 2, 3, 4]
 
-    print("\n6. Normal and failing context-manager exit")
+    show_section(6, "Context manager: normal and error cases")
     with OperationTimer("calculate local table view") as view_timer:
         show_pos_view(session)
     print(f"  Normal exit completed: {view_timer.completed}; failed: {view_timer.failed}")
@@ -173,7 +211,7 @@ def main():
     assert not session.payments
     print(f"  Exceptional exit completed: {failed_timer.completed}; failed: {failed_timer.failed}")
 
-    print("\n7. Settle shares with mock cards and optional tips")
+    show_section(7, "Mock payments and tips")
     print("  Tip options:", MockPayment.TIP_OPTIONS)
     print("  Percentage tips on 10.00:", {rate: MockPayment.calculate_tip(1000, rate) for rate in (10, 12, 15, 20)})
     for payment_id, diner_id, choice, manual in [(1, 1, 10, None), (2, 2, "Other", 500), (3, 3, "None", None)]:
@@ -182,7 +220,7 @@ def main():
     assert session.outstanding_cents == 0
     expected_rejection("changing paid participation", lambda: session.find_item(1).remove_diner(session.find_diner(1)))
 
-    print("\n8. Add a later order and preserve earlier paid items")
+    show_section(8, "Later order and final table state")
     later = Order(2)
     later.add_item(OrderItem(7, repository.find(15)))
     session.add_order(later)
