@@ -2,7 +2,7 @@
 
 ## Tools and scope
 
-I defined the product requirements and expected function behavior. I used ChatGPT and Codex for planning, code generation and review, documentation, and synthetic data. I remain responsible for understanding the implementation.
+I defined the product requirements and expected function behavior. I used ChatGPT and Codex for planning, code generation and review, documentation (including Hebrew function comments), and synthetic data. I remain responsible for understanding the implementation.
 
 ## Data-generation request
 
@@ -31,4 +31,4 @@ The 18 JSONL records were checked for unique IDs, required fields, types, valid 
 
 ## Code verification
 
-Codex ran the demo and development checks under Python 3.13.7. They passed for bill allocation, tips, validation, queues, iterators, lazy processing, and cleanup on errors. Review corrections included per-item payment tracking and rejecting boolean/float identifiers. The final demo closes the table with no unpaid balance.
+Codex ran the demo and development checks under Python 3.13.7. They passed for bill allocation, tips, validation, queues, iterators, lazy processing, and cleanup on errors. Review corrections included per-item payment tracking and rejecting boolean/float identifiers, and preventing closure before all items are served. Closure checks covered ordered, preparing, served, and unpaid cases. The final demo closes the table after all items are served and paid.

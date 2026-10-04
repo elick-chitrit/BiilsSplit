@@ -24,7 +24,7 @@ Splitting a bill among many friends can take time and leave someone paying for t
 **Diners:** view the menu and orders, join the items they consumed, order more, and make mock payments with optional tips. **Restaurant staff:** receive orders and update fulfillment. **Shift managers:** monitor tables, balances, and closure.
 
 ### 4. Main Business Process: Trigger, Flow, and Result
-**Trigger:** Staff open a table session and diners join through its QR code. **Flow:** Diners view existing items, identify what they consumed or shared, and order from the menu. A personal item is charged to its consumer. A shared item is split equally among its participants, with any remaining cents allocated consistently. Diners settle their shares with synthetic mock cards and choose **10%, 12%, 15%, 20%, Other (manual amount), or None** as a tip. Percentages apply to the item amount being settled. **Result:** Payments update balances and staff close a fully allocated, paid session. Prices and quantities must be positive, ordered items must be available, participants must belong to the table, and duplicate participation is rejected. Payment/tip amounts cannot be negative, and paid allocations cannot change.
+**Trigger:** Staff open a table session and diners join through its QR code. **Flow:** Diners view existing items, identify what they consumed or shared, and order from the menu. A personal item is charged to its consumer. A shared item is split equally among its participants, with any remaining cents allocated consistently. Diners settle their shares with synthetic mock cards and choose **10%, 12%, 15%, 20%, Other (manual amount), or None** as a tip. Percentages apply to the item amount being settled. **Result:** Payments update balances and staff close an allocated, paid, served session. Prices and quantities must be positive, ordered items must be available, participants must belong to the table, and duplicate participation is rejected. Payment/tip amounts cannot be negative, and paid allocations cannot change.
 
 ### 5. Information Flow
 The restaurant supplies tables and menus. Diners create orders, item participation, and tip choices. Staff update fulfillment. The system calculates personal amounts and produces the current order, item/payment, and table state. **Tabit is the external POS integration target** so these updates can appear on restaurant computers. Stage 1 simulates synchronization locally; it does not use a real Tabit API. All demo data and payments are synthetic, with no real card data, payment provider, or payment API.
@@ -74,6 +74,8 @@ Connect to Tabit in a later course stage, subject to authorized access and suppo
 
 ## Model and design choices
 
+Each function and method starts with a short Hebrew comment explaining its purpose.
+
 I separated the physical table from the meal taking place at it. `Restaurant` contains the menu and tables; `TableSession` contains the diners, orders, and payments for one meal. An `Order` contains `OrderItem` objects, with methods to add, find, remove draft items, and calculate the total. Once submitted, its lines stay fixed. More purchases go into a new order.
 
 For inheritance, `FoodItem` and `DrinkItem` extend `MenuItem`. Both implement `preparation_area()`: food goes to the kitchen, drinks to the bar. `Order.preparation_requests()` calls the same method for either type. It does not need an `if` for each subclass.
@@ -88,7 +90,7 @@ I store money as integer cents. This avoids floating-point rounding issues when 
 
 A diner pays their current unpaid shares in full. Tips can be 10%, 12%, 15%, 20%, `Other` with a nonnegative manual amount, or `None`. Percentage tips apply to that payment's item amount and round half up to a cent. A tip does not reduce the amount owed for the items.
 
-All items must be allocated before checkout. Once someone pays a share of an item, its participants cannot change. A later order can create a new balance without changing earlier payments. The session closes only when all items are allocated and the item balance is zero.
+All items must be allocated before checkout. Once someone pays a share of an item, its participants cannot change. A later order can create a new balance without changing earlier payments. The session closes only when all items are allocated, all items have been served, and the item balance is zero. If any item is still ordered or preparing, closure raises `ValueError` and leaves the session open so staff can finish serving it.
 
 ## Data structures
 
@@ -191,7 +193,7 @@ Tabit is the future integration target. This demo does not send data to restaura
 
 ## Verification and submission
 
-The model/processing checks passed 138 checks, and Part D passed another 105. The full demo also ran successfully. The final model review also checked price updates in all three menu classes and diners with missing, active, and inactive mock payment methods. After the identifier correction, all 243 existing checks passed again. Another 160 invalid-identifier operations were rejected without state changes, and 800 allocation/settlement scenarios conserved every cent and charged nonparticipants zero. The full demo passed with the new identifier-rejection examples. Invalid test data and development scripts stay outside the project; the submitted sample file contains valid records only.
+The model/processing checks passed 138 checks, and Part D passed another 105. The full demo also ran successfully. The final model review also checked price updates in all three menu classes and diners with missing, active, and inactive mock payment methods. After the identifier correction, all 243 existing checks passed again. Another 160 invalid-identifier operations were rejected without state changes, and 800 allocation/settlement scenarios conserved every cent and charged nonparticipants zero. The full demo passed with the new identifier-rejection examples. Closure checks also passed for nine combinations of fulfillment states and a served-but-unpaid table. The demo now shows that a fully paid table stays open until every item is served. Invalid test data and development scripts stay outside the project; the submitted sample file contains valid records only.
 
 The project files are in GitHub. I keep changes small and make a commit and push after each completed, verified task, including separate meaningful changes in the same file. The target is at least nine meaningful commits; the course requires at least seven.
 
