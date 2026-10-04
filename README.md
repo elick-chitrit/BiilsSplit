@@ -1,7 +1,5 @@
 # BillsSplit
 
-**Elick Chitrit**
-
 [Hebrew guide: running the demo and reading the output](GUIDE_HE.md)
 
 A few years ago, I came up with the idea for BillsSplit after running into a problem at restaurant dinners with a large group of friends: figuring out who should pay for what. Some people shared dishes, others ordered for themselves, and splitting the bill equally did not always make sense.
@@ -9,6 +7,8 @@ A few years ago, I came up with the idea for BillsSplit after running into a pro
 The goal is simple: each person should pay for what they actually ate or drank. If they shared something, they pay their share. If they did not have it, they should not pay for it.
 
 This project is a local Python demo of that startup idea, built for my Advanced Programming course. It covers the business logic: the restaurant menu, table orders, shared items, individual balances, tips, and mock payments. The full product would connect to Tabit. For this stage, the POS state is simulated locally and all payments are fake.
+
+Written and edited by Elick Chitrit.
 
 ## Project Proposal
 

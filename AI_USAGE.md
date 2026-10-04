@@ -1,7 +1,5 @@
 # AI Usage
 
-**Elick Chitrit**
-
 ## Tools and scope
 
 I defined the product requirements and expected function behavior. I used ChatGPT and Codex for planning, code generation and review, documentation, and synthetic data. I remain responsible for understanding the implementation.
