@@ -57,6 +57,10 @@ class MenuItem:
         self._price_cents = _integer(value, "Menu price")
 
     @property
+    def display_price(self):
+        return f"{self.price_cents / 100:.2f}"
+
+    @property
     def available(self):
         return self._available
 
@@ -69,7 +73,7 @@ class MenuItem:
         return "service"
 
     def __str__(self):
-        return f"{self.name}: {self.price_cents / 100:.2f}"
+        return f"{self.name}: {self.display_price}"
 
     def __repr__(self):
         return (f"{type(self).__name__}(id={self.id}, name={self.name!r}, "
@@ -270,6 +274,10 @@ class Diner:
     @property
     def payment_method(self):
         return self._payment_method
+
+    @property
+    def has_active_payment_method(self):
+        return self.payment_method is not None and self.payment_method.active
 
     def set_payment_method(self, method):
         if not isinstance(method, MockPaymentMethod) or method.diner_id != self.id:
@@ -722,7 +730,7 @@ class TableSession:
         if any(not item.participants for item in self.items):
             raise ValueError("Allocate all ordered items before making a payment.")
         method = diner.payment_method
-        if method is None or not method.active:
+        if not diner.has_active_payment_method:
             raise ValueError("An active synthetic payment method is required.")
         amount = self.diner_owed_cents(diner_id)
         if amount <= 0:
