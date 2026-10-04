@@ -51,7 +51,7 @@ Connect to Tabit in a later course stage, subject to authorized access and suppo
 | C - Collections and processing | Implemented |
 | D - Iterators, generators, loading, context manager | Implemented |
 | E - Structure and full demo | Implemented; the full run passed |
-| F - Git/GitHub | Changes pushed and final model updates reviewed and merged through PR #1; instructor access and submission remain |
+| F - Git/GitHub | Changes pushed, PR #1 merged, and the repository is public; submission remains |
 | G - AI data and documentation | 18 synthetic records and usage documentation are included |
 
 ## Files
@@ -197,8 +197,9 @@ The project files are in GitHub. I keep changes small and make a commit and push
 
 The final model updates were checked in [Pull Request #1](https://github.com/elick-chitrit/BiilsSplit/pull/1) and merged into `main`. The history exceeds nine meaningful commits. The original commits were preserved during the merge.
 
+The repository is public and can be viewed without a GitHub invitation.
+
 Before submission:
 
-- Give the instructor access to the currently private repository.
 - Include the current `git log --oneline --graph --all` output in the submission.
 - Submit the repository link and required materials through the course submission system.
