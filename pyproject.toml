@@ -1,0 +1,8 @@
+[project]
+name = "bills-split"
+version = "0.1.0"
+description = "Local demo of a restaurant ordering and bill-splitting idea"
+authors = [{name = "Elick Chitrit"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
