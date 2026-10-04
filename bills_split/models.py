@@ -761,6 +761,8 @@ class TableSession:
             raise ValueError("Cannot close a session with unallocated items.")
         if self.outstanding_cents != 0:
             raise ValueError("Cannot close a session with an outstanding balance.")
+        if any(item.status != "served" for item in self.items):
+            raise ValueError("Cannot close a session before all items are served.")
         self._status = "closed"
         self.table._active_session = None
 
