@@ -256,6 +256,8 @@ def main():
     show_payments(session)
     show_balances(session)
     assert session.diner_owed_cents(4) == 0
+    expected_rejection("closing a paid table before all items are served", session.close)
+    assert session.status == "open" and table.active_session is session
     for item in session.items:
         while item.status != "served":
             item.advance_status()
