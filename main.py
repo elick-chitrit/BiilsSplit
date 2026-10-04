@@ -61,7 +61,7 @@ def show_order(order):
 
 
 def show_balances(session):
-    # מציגה לכל סועד את חלקו, כמה שילם וכמה עוד נשאר לו לשלם.
+    # מציגה לכל סועד את חלקו, התשלום והיתרה.
     print(f"\n  {'Diner':<14} {'Item share':>10} {'Paid':>10} {'Still owed':>10}")
     print("  " + "-" * 47)
     for diner in session.diners:

@@ -295,7 +295,7 @@ class MockPaymentMethod:
         return f"{self.synthetic_card_label} ({'active' if self.active else 'inactive'})"
 
     def __repr__(self):
-        # מחזירה פרטים על אמצעי תשלום מוקאפ שעוזרים לבדוק את מצב האובייקט.
+        # מחזירה את פרטי אמצעי התשלום לצורך בדיקה.
         return f"MockPaymentMethod(id={self.id}, diner_id={self.diner_id}, active={self.active})"
 
 
@@ -420,7 +420,7 @@ class OrderItem:
             raise ValueError("The item must belong to an open table session.")
 
     def associate_diner(self, diner):
-        # משייכת סועד לפריט רק אם הוא בארוחה והחלוקה עדיין לא ננעלה.
+        # משייכת משתתף מהארוחה לפריט שעדיין פתוח לשינויים.
         self._require_open_session()
         self._session._require_member(diner)
         if self.locked:
@@ -763,7 +763,7 @@ class TableSession:
             raise ValueError("The table session is closed.")
 
     def _require_member(self, diner):
-        # בודקת שזה הסועד הרשום בארוחה ולא אובייקט אחר עם אותו מזהה.
+        # בודקת שזה אותו אובייקט סועד שנרשם לארוחה.
         if not isinstance(diner, Diner) or self._diners.get(diner.id) is not diner:
             raise ValueError("The diner must be a member of this table session.")
 
@@ -845,7 +845,7 @@ class TableSession:
                    for payment in self.payments)
 
     def item_payment_status(self, item_id):
-        # מחזירה אם הפריט לא שויך, לא שולם, שולם חלקית או שולם במלואו.
+        # מחזירה את מצב השיוך והתשלום של הפריט.
         item = self.find_item(item_id)
         if not item.participants:
             return "unallocated"
@@ -857,7 +857,7 @@ class TableSession:
         return "unpaid"
 
     def pay(self, payment_id, diner_id, tip_option="None", manual_tip_cents=None):
-        # מסדירה במוקאפ את כל היתרה של הסועד, רושמת טיפ ונועלת את החלוקה.
+        # רושמת תשלום מוקאפ ליתרה ולטיפ, ונועלת את החלוקה.
         self._require_open()
         _integer(payment_id, "Mock payment ID")
         diner = self.find_diner(diner_id)

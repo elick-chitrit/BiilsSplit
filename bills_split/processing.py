@@ -25,7 +25,7 @@ def pending_items(session):
 
 
 def preparation_records(session):
-    # יוצרת לכל פריט ממתין רשומה עם מזהה, יעד הכנה, כמות ומצב.
+    # יוצרת רשומות הכנה לפריטים שטרם הוגשו.
     """Preparation records: ID, area, quantity, and status."""
     return [(item.id, item.preparation_area(), item.quantity, item.status)
             for item in pending_items(session)]
@@ -171,7 +171,7 @@ class PriorityPreparationQueue:
         self._arrival = 0
 
     def enqueue(self, item_id, priority=3):
-        # מוסיפה בקשת הכנה עם עדיפות ושומרת סדר הגעה למקרה של שוויון.
+        # מוסיפה בקשה לפי עדיפות, עם סדר הגעה לשבירת שוויון.
         self._session._require_open()
         if (not isinstance(priority, int) or isinstance(priority, bool)
                 or priority not in (1, 2, 3)):

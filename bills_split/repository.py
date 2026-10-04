@@ -26,7 +26,7 @@ def menu_item_from_dict(data):
 
 
 def load_menu_items(path):
-    # קוראת את הקובץ שורה אחרי שורה ובודקת כל פריט לפני הוספתו.
+    # טוענת ובודקת את פריטי התפריט שורה אחרי שורה.
     """Load valid menu items one line at a time, keeping file order.
 
     The returned menu is stored in memory. with closes the file even if
@@ -52,7 +52,7 @@ class MenuRepository:
     """Store menu items by ID and reject duplicates."""
 
     def __init__(self, items):
-        # מכינה את הנתונים ההתחלתיים של אוסף פריטי תפריט לחיפוש לפי מזהה.
+        # בונה אוסף פריטי תפריט לחיפוש לפי מזהה.
         self._items = {}
         for item in items:
             self.add(item)
@@ -76,7 +76,7 @@ class MenuRepository:
         self._items[item.id] = item
 
     def find(self, item_id):
-        # מחפשת פריט לפי מזהה תקין ומחזירה None אם הוא לא נמצא.
+        # מחפשת לפי מזהה תקין, ומחזירה None אם חסר.
         if not isinstance(item_id, int) or isinstance(item_id, bool) or item_id <= 0:
             raise ValueError("Lookup requires a positive integer menu item ID.")
         # A missing ID returns None so the caller can handle it.
@@ -87,5 +87,5 @@ class MenuRepository:
         return len(self._items)
 
     def __repr__(self):
-        # מחזירה פרטים על אוסף פריטי תפריט לחיפוש לפי מזהה שעוזרים לבדוק את מצב האובייקט.
+        # מחזירה את פרטי אוסף התפריט לצורך בדיקה.
         return f"MenuRepository(items={len(self)})"

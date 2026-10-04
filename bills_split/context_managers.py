@@ -57,13 +57,13 @@ class OperationTimer:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        # מסיימת את המדידה גם בשגיאה ומשאירה את החריגה גלויה לקוד הקורא.
+        # מסיימת מדידה גם בשגיאה, בלי להסתיר את החריגה.
         self._duration_seconds = time.perf_counter() - self._started_at
         self._failed = exc_type is not None
         self._active = False
         return False
 
     def __repr__(self):
-        # מחזירה פרטים על מדידת זמן של פעולה שעוזרים לבדוק את מצב האובייקט.
+        # מחזירה את פרטי הטיימר לצורך בדיקה.
         return (f"OperationTimer(name={self.name!r}, completed={self.completed}, "
                 f"failed={self.failed})")

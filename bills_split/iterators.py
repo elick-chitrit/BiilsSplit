@@ -36,7 +36,7 @@ class OrderItemCollection:
         return len(self._items)
 
     def __repr__(self):
-        # מחזירה פרטים על אוסף פריטי הזמנה שעוזרים לבדוק את מצב האובייקט.
+        # מחזירה את פרטי האוסף לצורך בדיקה.
         return f"OrderItemCollection(items={len(self)})"
 
 
