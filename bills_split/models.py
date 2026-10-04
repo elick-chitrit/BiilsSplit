@@ -362,7 +362,7 @@ class OrderItem:
     def share_cents(self, diner):
         if diner not in self._participants:
             return 0
-        # Any indivisible cents go to the earliest joined participants.
+        # Any indivisible cents go to the earliest associated participants.
         # Shares differ by at most one cent and always sum to the line total.
         count = len(self._participants)
         share = self.total_cents // count
@@ -474,19 +474,29 @@ class MockPayment:
     TIP_OPTIONS = (10, 12, 15, 20, "Other", "None")
 
     def __init__(self, payment_id, session_id, diner_id, method_id,
-                 amount_cents, tip_cents=0):
+                 amount_cents, item_allocations, tip_cents=0):
         self._id = _integer(payment_id, "Mock payment ID")
         self._session_id = _integer(session_id, "Payment session ID")
         self._diner_id = _integer(diner_id, "Payment diner ID")
         self._method_id = _integer(method_id, "Mock payment method ID")
         self._amount_cents = _integer(amount_cents, "Payment amount")
         self._tip_cents = _integer(tip_cents, "Tip amount", 0)
+        if not isinstance(item_allocations, dict) or not item_allocations:
+            raise ValueError("A mock payment requires its paid item shares.")
+        allocations = {}
+        for item_id, share in item_allocations.items():
+            _integer(item_id, "Paid order item ID")
+            allocations[item_id] = _integer(share, "Paid item share")
+        if sum(allocations.values()) != self.amount_cents:
+            raise ValueError("Paid item shares must sum to the payment amount, excluding tip.")
+        self._item_allocations = allocations
 
     @classmethod
     def from_dict(cls, data):
-        _record(data, ("id", "session_id", "diner_id", "method_id", "amount_cents"))
+        _record(data, ("id", "session_id", "diner_id", "method_id", "amount_cents", "item_allocations"))
         return cls(data["id"], data["session_id"], data["diner_id"],
-                   data["method_id"], data["amount_cents"], data.get("tip_cents", 0))
+                   data["method_id"], data["amount_cents"], data["item_allocations"],
+                   data.get("tip_cents", 0))
 
     @staticmethod
     def calculate_tip(amount_cents, option="None", manual_tip_cents=None):
@@ -518,6 +528,10 @@ class MockPayment:
     @property
     def method_id(self):
         return self._method_id
+
+    @property
+    def item_allocations(self):
+        return dict(self._item_allocations)
 
     @property
     def amount_cents(self):
@@ -678,6 +692,29 @@ class TableSession:
                    if payment.diner_id == diner_id)
         return subtotal - paid
 
+    def diner_item_owed_cents(self, item_id, diner_id):
+        item = self.find_item(item_id)
+        diner = self.find_diner(diner_id)
+        paid = sum(payment.item_allocations.get(item_id, 0)
+                   for payment in self.payments if payment.diner_id == diner_id)
+        return item.share_cents(diner) - paid
+
+    def item_paid_cents(self, item_id):
+        self.find_item(item_id)
+        return sum(payment.item_allocations.get(item_id, 0)
+                   for payment in self.payments)
+
+    def item_payment_status(self, item_id):
+        item = self.find_item(item_id)
+        if not item.participants:
+            return "unallocated"
+        paid = self.item_paid_cents(item_id)
+        if paid == item.total_cents:
+            return "mock_paid"
+        if paid > 0:
+            return "partially_mock_paid"
+        return "unpaid"
+
     def pay(self, payment_id, diner_id, tip_option="None", manual_tip_cents=None):
         self._require_open()
         _integer(payment_id, "Mock payment ID")
@@ -693,7 +730,13 @@ class TableSession:
         if amount <= 0:
             raise ValueError("This diner has no outstanding item balance.")
         tip = MockPayment.calculate_tip(amount, tip_option, manual_tip_cents)
-        payment = MockPayment(payment_id, self.id, diner.id, method.id, amount, tip)
+        allocations = {}
+        for item in self.items:
+            owed = self.diner_item_owed_cents(item.id, diner.id)
+            if owed > 0:
+                allocations[item.id] = owed
+        payment = MockPayment(payment_id, self.id, diner.id, method.id,
+                              amount, allocations, tip)
         # Record only after all validation succeeds. No external charge occurs.
         self._payments[payment.id] = payment
         for item in self.items:
