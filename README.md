@@ -1,5 +1,7 @@
 # BillsSplit
 
+[GitHub repository](https://github.com/elick-chitrit/BiilsSplit)
+
 [Hebrew guide: running the demo and reading the output](GUIDE_HE.md)
 
 A few years ago, I came up with the idea for BillsSplit after running into a problem at restaurant dinners with a large group of friends: figuring out who should pay for what. Some people shared dishes, others ordered for themselves, and splitting the bill equally did not always make sense.
