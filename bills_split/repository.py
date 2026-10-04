@@ -10,6 +10,7 @@ MENU_FIELDS = {"id", "category", "name", "price_cents", "available"}
 
 
 def menu_item_from_dict(data):
+    # בודקת את שדות הרשומה ויוצרת ממנה מנה או משקה.
     """Choose the menu class and use its normal validation."""
     if not isinstance(data, dict):
         raise ValueError("Each menu record must be a JSON object.")
@@ -25,6 +26,7 @@ def menu_item_from_dict(data):
 
 
 def load_menu_items(path):
+    # קוראת את הקובץ שורה אחרי שורה ובודקת כל פריט לפני הוספתו.
     """Load valid menu items one line at a time, keeping file order.
 
     The returned menu is stored in memory. with closes the file even if
@@ -50,19 +52,23 @@ class MenuRepository:
     """Store menu items by ID and reject duplicates."""
 
     def __init__(self, items):
+        # מכינה את הנתונים ההתחלתיים של אוסף פריטי תפריט לחיפוש לפי מזהה.
         self._items = {}
         for item in items:
             self.add(item)
 
     @classmethod
     def from_jsonl(cls, path):
+        # טוענת את קובץ הנתונים ובונה ממנו אוסף לחיפוש לפי מזהה.
         return cls(load_menu_items(path))
 
     @property
     def items(self):
+        # מחזירה עותק של רשימת פריטי התפריט שבאוסף.
         return list(self._items.values())
 
     def add(self, item):
+        # מוסיפה פריט תפריט לאוסף רק אם המזהה שלו עדיין פנוי.
         if not isinstance(item, MenuItem):
             raise ValueError("The menu repository accepts only menu items.")
         if item.id in self._items:
@@ -70,13 +76,16 @@ class MenuRepository:
         self._items[item.id] = item
 
     def find(self, item_id):
+        # מחפשת פריט לפי מזהה תקין ומחזירה None אם הוא לא נמצא.
         if not isinstance(item_id, int) or isinstance(item_id, bool) or item_id <= 0:
             raise ValueError("Lookup requires a positive integer menu item ID.")
         # A missing ID returns None so the caller can handle it.
         return self._items.get(item_id)
 
     def __len__(self):
+        # מחזירה את מספר פריטי התפריט באוסף.
         return len(self._items)
 
     def __repr__(self):
+        # מחזירה פרטים על אוסף פריטי תפריט לחיפוש לפי מזהה שעוזרים לבדוק את מצב האובייקט.
         return f"MenuRepository(items={len(self)})"

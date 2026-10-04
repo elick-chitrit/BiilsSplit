@@ -16,6 +16,7 @@ from bills_split.context_managers import OperationTimer
 
 
 def expected_rejection(label, action):
+    # מריצה פעולה לא תקינה ומראה שהיא נדחתה כמו שציפינו.
     """Show that an invalid action is rejected."""
     try:
         action()
@@ -27,6 +28,7 @@ def expected_rejection(label, action):
 
 
 def trace_demo_items(items, visited):
+    # רושמת באילו פריטים עברנו כדי להראות מתי הגנרטור באמת עובד.
     """Track which items the generator actually visits."""
     for item in items:
         visited.append(item.id)
@@ -34,12 +36,14 @@ def trace_demo_items(items, visited):
 
 
 def show_section(number, title):
+    # מדפיסה כותרת והפרדה ברורה בין חלקי הדמו.
     print("\n" + "=" * 68)
     print(f"{number}. {title}")
     print("=" * 68)
 
 
 def show_menu(session):
+    # מציגה את התפריט בטבלה עם מחיר וזמינות.
     print(f"  {'ID':<4} {'Menu item':<24} {'Price':>8}  {'Availability':<12}")
     print("  " + "-" * 52)
     for item in session.menu:
@@ -48,6 +52,7 @@ def show_menu(session):
 
 
 def show_order(order):
+    # מציגה את פריטי ההזמנה ואת הסועדים שמשתתפים בכל פריט.
     print(f"\n  {'Line':<4} {'Ordered item':<22} {'Qty':>3} {'Total':>8}  Shared by")
     print("  " + "-" * 64)
     for item in order.items:
@@ -56,6 +61,7 @@ def show_order(order):
 
 
 def show_balances(session):
+    # מציגה לכל סועד את חלקו, כמה שילם וכמה עוד נשאר לו לשלם.
     print(f"\n  {'Diner':<14} {'Item share':>10} {'Paid':>10} {'Still owed':>10}")
     print("  " + "-" * 47)
     for diner in session.diners:
@@ -67,6 +73,7 @@ def show_balances(session):
 
 
 def show_payments(session):
+    # מציגה את קבלות המוקאפ, הטיפים והפריטים ששולמו בכל קבלה.
     print(f"\n  {'Receipt':<8} {'Diner':<12} {'Items':>8} {'Tip':>8} {'Total':>8}")
     print("  " + "-" * 48)
     for payment in session.payments:
@@ -78,6 +85,7 @@ def show_payments(session):
 
 
 def show_pos_view(session):
+    # מציגה את מצב השולחן והפריטים מתוך הסימולציה המקומית.
     snapshot = local_pos_snapshot(session)
     print(f"\n  Local POS view | Table {snapshot['table_id']} | {snapshot['session_status'].upper()}")
     print(f"  Mode: {snapshot['mode']} (Tabit target)")
@@ -92,6 +100,7 @@ def show_pos_view(session):
 
 
 def main():
+    # מריצה את הארוחה לדוגמה, מהתפריט ועד תשלום וסגירת השולחן.
     print("=" * 68)
     print("BillsSplit - Stage 1 local demonstration")
     print("Each diner pays only for the items they consumed or shared.")
