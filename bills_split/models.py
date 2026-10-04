@@ -1,8 +1,7 @@
-"""Part B business model. All money is in integer cents (100 cents = 1 unit).
+"""Restaurant, table, order, and mock payment models.
 
-No QR scanner, POS connection, real card details, or payment API is used.
-The session represents the local table state. Only synthetic diner data belong
-in demonstrations. Private fields must be changed through the public methods.
+Money is stored in cents. State changes go through the model's methods.
+The QR reference, POS state, and payments are local mock data.
 """
 
 
@@ -27,7 +26,7 @@ def _record(data, fields):
 
 
 class MenuItem:
-    """A restaurant menu entry; existing order lines retain their agreed price."""
+    """A menu item with a price and availability."""
 
     def __init__(self, item_id, name, price_cents, available=True):
         self._id = _integer(item_id, "Menu item ID")
@@ -78,21 +77,21 @@ class MenuItem:
 
 
 class FoodItem(MenuItem):
-    """Food orders are directed to the kitchen."""
+    """Food is prepared in the kitchen."""
 
     def preparation_area(self):
         return "kitchen"
 
 
 class DrinkItem(MenuItem):
-    """Drink orders are directed to the bar."""
+    """Drinks are prepared at the bar."""
 
     def preparation_area(self):
         return "bar"
 
 
 class Restaurant:
-    """Owns the menu and physical tables, with unique IDs in each collection."""
+    """The restaurant menu and physical tables."""
 
     def __init__(self, restaurant_id, name):
         self._id = _integer(restaurant_id, "Restaurant ID")
@@ -161,7 +160,7 @@ class Restaurant:
 
 
 class Table:
-    """A physical table; its synthetic QR label identifies the join target."""
+    """A physical table, separate from the meal taking place at it."""
 
     def __init__(self, table_id, number, restaurant):
         if not isinstance(restaurant, Restaurant):
@@ -207,7 +206,7 @@ class Table:
 
 
 class MockPaymentMethod:
-    """A synthetic card reference. No card number, expiry, or CVV is accepted."""
+    """A mock card label with no real card details."""
 
     def __init__(self, method_id, diner_id):
         self._id = _integer(method_id, "Mock payment method ID")
@@ -246,7 +245,7 @@ class MockPaymentMethod:
 
 
 class Diner:
-    """A diner with an optional synthetic payment method."""
+    """A diner and their optional mock payment method."""
 
     def __init__(self, diner_id, name, payment_method=None):
         self._id = _integer(diner_id, "Diner ID")
@@ -285,7 +284,7 @@ class Diner:
 
 
 class OrderItem:
-    """A priced order line. Participation requires membership in its session."""
+    """An ordered item and the diners who consumed it."""
 
     def __init__(self, item_id, menu_item, quantity=1):
         if not isinstance(menu_item, MenuItem) or not menu_item.available:
@@ -362,8 +361,7 @@ class OrderItem:
     def share_cents(self, diner):
         if diner not in self._participants:
             return 0
-        # Any indivisible cents go to the earliest associated participants.
-        # Shares differ by at most one cent and always sum to the line total.
+        # Give leftover cents in participation order so the total stays exact.
         count = len(self._participants)
         share = self.total_cents // count
         remainder = self.total_cents % count
@@ -379,7 +377,7 @@ class OrderItem:
         self._status = next_status[self.status]
 
     def preparation_area(self):
-        # Polymorphism: food and drinks provide their own routing behavior.
+        # Food and drinks choose their own preparation area.
         return self.menu_item.preparation_area()
 
     def __len__(self):
@@ -393,7 +391,7 @@ class OrderItem:
 
 
 class Order:
-    """A draft order becomes fixed when submitted to a table session."""
+    """Order lines can change until the order is submitted."""
 
     def __init__(self, order_id):
         self._id = _integer(order_id, "Order ID")
@@ -465,10 +463,10 @@ class Order:
 
 
 class MockPayment:
-    """An immutable synthetic receipt; constructing it never settles a session.
+    """A mock receipt showing which item shares were paid.
 
-    TableSession.pay records accepted payments. Receipts contain only synthetic
-    identifiers and money amounts, never card details.
+    TableSession.pay records the payment. Creating a receipt on its own
+    does not settle a session.
     """
 
     TIP_OPTIONS = (10, 12, 15, 20, "Other", "None")
@@ -510,7 +508,7 @@ class MockPayment:
         _integer(option, "Tip percentage")
         if option not in (10, 12, 15, 20):
             raise ValueError("Choose 10, 12, 15, 20, Other, or None.")
-        # Round a percentage tip to the nearest cent, with halves rounded up.
+        # Round the tip to a cent, with halves rounded up.
         return (amount_cents * option + 50) // 100
 
     @property
@@ -558,7 +556,7 @@ class MockPayment:
 
 
 class TableSession:
-    """Coordinates membership, orders, allocation, mock payments, and closure."""
+    """One meal at a table, including diners, orders, and payments."""
 
     def __init__(self, session_id, table):
         session_id = _integer(session_id, "Session ID")
@@ -619,7 +617,7 @@ class TableSession:
 
     @property
     def paid_cents(self):
-        # Tips never reduce the restaurant's outstanding item balance.
+        # Tips are separate from the item bill.
         return sum(payment.amount_cents for payment in self.payments)
 
     @property
@@ -667,7 +665,7 @@ class TableSession:
                 raise ValueError("An order must use available items from this restaurant menu.")
             if item.id in existing_ids:
                 raise ValueError("Order item ID already exists in this session.")
-        # Validate the whole order before changing any relationships.
+        # Check every line before adding the order.
         self._orders[order.id] = order
         order._session = self
         for item in order.items:
@@ -737,7 +735,7 @@ class TableSession:
                 allocations[item.id] = owed
         payment = MockPayment(payment_id, self.id, diner.id, method.id,
                               amount, allocations, tip)
-        # Record only after all validation succeeds. No external charge occurs.
+        # Save the mock payment only after all checks pass.
         self._payments[payment.id] = payment
         for item in self.items:
             if diner in item.participants:

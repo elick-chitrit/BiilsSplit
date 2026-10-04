@@ -1,7 +1,7 @@
-"""Part C: collections and local restaurant views, using course material only.
+"""Lists, groups, queues, and the local table view.
 
-The two queues are alternative preparation workflows, scoped to one session.
-Dequeueing selects a request; it does not prepare or serve the order item.
+The queues are two alternatives for handling a session's preparation work.
+Selecting a request does not mean the item has been prepared or served.
 """
 
 from collections import deque
@@ -17,19 +17,19 @@ def _session(session):
 
 
 def pending_items(session):
-    """Return a new ordered list; the session's collection is not changed."""
+    """Get the items that have not been served."""
     _session(session)
     return [item for item in session.items if item.status != "served"]
 
 
 def preparation_records(session):
-    """Short fixed tuples: item ID, preparation area, quantity, and status."""
+    """Preparation records: ID, area, quantity, and status."""
     return [(item.id, item.preparation_area(), item.quantity, item.status)
             for item in pending_items(session)]
 
 
 def describe_preparation_record(record):
-    """Unpack the destination separately from the remaining line details."""
+    """Turn a preparation record into a readable line."""
     if not isinstance(record, tuple) or len(record) != 4:
         raise ValueError("A preparation record requires four tuple fields.")
     item_id, area, *details = record
@@ -43,7 +43,7 @@ def participating_diner_ids(session):
 
 
 def diners_without_items(session):
-    """A membership audit; these diners owe nothing for the existing items."""
+    """Find diners who did not participate in any items."""
     _session(session)
     joined = set()
     for diner in session.diners:
@@ -58,7 +58,7 @@ def common_diner_ids(first_item, second_item):
 
 
 def index_items(session):
-    """Reject duplicates instead of silently replacing an indexed line."""
+    """Index items by ID without replacing duplicates."""
     _session(session)
     items = session.items
     seen = set()
@@ -82,7 +82,7 @@ def group_pending_by_area(session):
 
 
 def area_workload(session):
-    """Count ordered units per destination, using items() and unpacking."""
+    """Count how many units each preparation area needs to handle."""
     counts = {}
     for area, items in group_pending_by_area(session).items():
         counts[area] = sum(item.quantity for item in items)
@@ -90,7 +90,7 @@ def area_workload(session):
 
 
 def preparation_sort_key(item):
-    """Group by area, then put untouched requests before ones in preparation."""
+    """Sort by area, status, and ID."""
     status_rank = {"ordered": 0, "preparing": 1, "served": 2}
     return (item.preparation_area(), status_rank[item.status], item.id)
 
@@ -100,7 +100,7 @@ def sorted_preparation_items(session):
 
 
 def sorted_diner_balances(session):
-    """Highest outstanding amount first, then diner ID for stable ties."""
+    """Sort by amount owed, then diner ID."""
     _session(session)
     balances = [(diner.id, session.diner_owed_cents(diner.id))
                 for diner in session.diners]
@@ -108,7 +108,7 @@ def sorted_diner_balances(session):
 
 
 class PreparationQueue:
-    """FIFO: earlier requests are selected first to avoid routine overtaking."""
+    """Handle routine requests in arrival order."""
 
     def __init__(self, session):
         self._session = _session(session)
@@ -126,7 +126,7 @@ class PreparationQueue:
         self._pending_ids.add(item.id)
 
     def dequeue(self):
-        # A request can become stale if staff update its status elsewhere.
+        # Skip requests whose status has already changed.
         while self._queue:
             item_id = self._queue.popleft()
             self._pending_ids.discard(item_id)
@@ -140,10 +140,10 @@ class PreparationQueue:
 
 
 class PriorityPreparationQueue:
-    """Staff-assigned priority: 1 urgent, 2 elevated, 3 routine.
+    """Preparation priority: 1 urgent, 2 elevated, 3 routine.
 
-    The arrival counter breaks ties, so heap tuples never compare model objects.
-    The internal heap is not a sorted list. Always select with heappop.
+    Arrival order breaks ties. Use heappop to select the next request;
+    the heap itself is not a sorted list.
     """
 
     def __init__(self, session):
@@ -180,10 +180,9 @@ class PriorityPreparationQueue:
 
 
 def local_pos_snapshot(session):
-    """Generate a fresh local POS-shaped view. Nothing is sent to Tabit.
+    """Get the current table state in a local POS view.
 
-    Calling again reflects the latest model state. There is no network adapter,
-    background synchronization, or connection to restaurant computers.
+    Call again after a change to get a new snapshot. No data is sent to Tabit.
     """
     _session(session)
     return {
