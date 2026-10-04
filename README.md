@@ -75,7 +75,7 @@ For inheritance, `FoodItem` and `DrinkItem` extend `MenuItem`. Both implement `p
 
 Each `Diner` can have a `MockPaymentMethod`. A `MockPayment` records exactly which item shares were paid, with the tip separate. Staff and shift managers are users in the product concept; this demo does not include account permissions or login.
 
-The model uses alternative constructors (`classmethod`), computed properties, a tip helper (`staticmethod`), and `__len__` where it fits. `__str__` gives a readable description; `__repr__` shows useful details when debugging. Invalid inputs raise `ValueError` before the valid state changes. Collection properties return copies, so changes go through the model's methods.
+The model uses alternative constructors (`classmethod`), computed properties, a tip helper (`staticmethod`), and `__len__` where it fits. `MenuItem.display_price` formats the current menu price for display and is inherited by food and drink items. `Diner.has_active_payment_method` checks the current mock method before checkout. Both classes also have `from_dict`, so each uses two of the OOP tools required in Part B. `__str__` gives a readable description; `__repr__` shows useful details when debugging. Invalid inputs raise `ValueError` before the valid state changes. Collection properties return copies, so changes go through the model's methods.
 
 ### Money and shared items
 
@@ -184,7 +184,7 @@ Tabit is the future integration target. This demo does not send data to restaura
 
 ## Verification and submission
 
-The model/processing checks passed 138 checks, and Part D passed another 105. The full demo also ran successfully. Invalid test data and development scripts stay outside the project; the submitted sample file contains valid records only.
+The model/processing checks passed 138 checks, and Part D passed another 105. The full demo also ran successfully. The final model review also checked price updates in all three menu classes and diners with missing, active, and inactive mock payment methods. Invalid test data and development scripts stay outside the project; the submitted sample file contains valid records only.
 
 The project files are in GitHub. I keep changes small and make a commit and push after each completed, verified task, including separate meaningful changes in the same file. The target is at least nine meaningful commits; the course requires at least seven.
 

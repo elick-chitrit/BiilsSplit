@@ -26,6 +26,7 @@ The project stays within the course material. It has no real card data, payment 
 - Shared amounts use cents, and existing orders keep their original price if the menu changes.
 - Queues reject duplicates, handle ties and empty/stale requests, and do not automatically mark selected items as served.
 - The proposal was shortened, then moved into README. All nine sections remain there, with no duplicate proposal file.
+- The final Part B review added `display_price` to MenuItem and `has_active_payment_method` to Diner. Together with `from_dict`, these give each class two required OOP tools. The price property is used in item descriptions, and the payment property is used at checkout.
 
 ## Data-generation request
 
@@ -63,6 +64,7 @@ All verification below ran under Python 3.13.7 on 2026-10-04:
 - Part D passed 105 checks for independent iterators, exhaustion/recreation, deferred work, the three-stage pipeline, early stopping, repository validation, file cleanup, and timer cleanup without hiding exceptions.
 - The full `main.py` run passed, including expected initial balances of 3251, 7800, 3750, and 0 cents. After a later 1700-cent drink, the final item total is 16501 cents, tips are 1029 cents, all items are served and mock-paid, and the table is closed.
 - The pipeline trace confirms that two results require items 1-4 only. Items 5 and 6 are not inspected.
+- After the final model changes, all 138 model/processing checks and 105 Part D checks passed again, along with the full demo. Focused checks covered inherited display prices, price updates, and missing, active, and inactive mock payment methods.
 
 Codex ran the development checks. The verification scripts are in its working directory (`work/verify_parts_bc.py` and `work/verify_part_d.py`), outside the academic repository. `main.py` is the reproducible project demonstration. Python 3.10 is the declared minimum, but it was not separately run in this environment.
 
