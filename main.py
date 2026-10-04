@@ -91,6 +91,10 @@ def main():
     expected_rejection("zero quantity", lambda: OrderItem(99, repository.find(1), 0))
     expected_rejection("an unavailable item", lambda: OrderItem(99, repository.find(11)))
     expected_rejection("duplicate participation", lambda: session.associate_diner(1, 1))
+    expected_rejection("a boolean diner ID", lambda: session.associate_diner(1, True))
+    expected_rejection("a floating-point item ID", lambda: session.find_item(1.0))
+    expected_rejection("an invalid payment diner ID", lambda: session.pay(99, True))
+    assert not session.payments and not session.find_item(1).locked
     expected_rejection("duplicate menu ID", lambda: repository.add(repository.find(1)))
     expected_rejection("closure before settlement", session.close)
 
