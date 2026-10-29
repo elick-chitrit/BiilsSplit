@@ -18,4 +18,12 @@ class CurrencyQuoteService:
 
     def quote(self, session, diner_id, currency):
         # מציגה אומדן של החלק האישי במטבע אחר.
-        raise NotImplementedError("Currency quote is not implemented yet.")
+        amount = session.diner_owed_cents(diner_id)
+        rate = self.client.fetch_rate(currency)
+        return {
+            "available": True,
+            "amount_ils_cents": amount,
+            "currency": currency,
+            "estimate": f"{amount / 100 * rate['rate']:.2f}",
+            "rate_date": rate["date"],
+        }
