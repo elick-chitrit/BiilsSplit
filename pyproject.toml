@@ -5,4 +5,11 @@ description = "Local demo of a restaurant ordering and bill-splitting idea"
 authors = [{name = "Elick Chitrit"}]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["requests>=2.32,<3"]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
