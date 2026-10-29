@@ -1,0 +1,5 @@
+[
+  {"base": "ILS", "quote": "USD", "rate": 0.25, "date": "2026-10-01"},
+  {"base": "ILS", "quote": "EUR", "rate": 0.23, "date": "2026-10-01"},
+  {"base": "ILS", "quote": "GBP", "rate": 0.20, "date": "2026-10-01"}
+]

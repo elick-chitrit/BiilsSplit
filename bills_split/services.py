@@ -1,6 +1,15 @@
 """Coordinate billing with dependencies supplied by the caller."""
 
 
+import logging
+
+from requests.exceptions import Timeout, ConnectionError, HTTPError, RequestException
+
+from .api_client import InvalidJSONError, InvalidRateError
+
+logger = logging.getLogger(__name__)
+
+
 class PaymentService:
     def __init__(self, tip_strategy):
         # מקבלת מבחוץ את דרך חישוב הטיפ.
@@ -19,8 +28,22 @@ class CurrencyQuoteService:
     def quote(self, session, diner_id, currency):
         # מציגה אומדן של החלק האישי במטבע אחר.
         amount = session.diner_owed_cents(diner_id)
-        rate = self.client.fetch_rate(currency)
-        return build_currency_quote(amount, rate)
+        try:
+            rate = self.client.fetch_rate(currency)
+        except (Timeout, ConnectionError):
+            reason = "network"
+        except HTTPError:
+            reason = "http"
+        except InvalidJSONError:
+            reason = "json"
+        except InvalidRateError:
+            reason = "data"
+        except RequestException:
+            reason = "request"
+        else:
+            return build_currency_quote(amount, rate)
+        logger.warning("Currency estimate unavailable: %s; keep ILS balance", reason)
+        return {"available": False, "amount_ils_cents": amount, "currency": currency, "reason": reason}
 
 
 def build_currency_quote(amount_cents, rate):
