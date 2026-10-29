@@ -20,3 +20,11 @@ def meal():
     session.associate_diner(1, 1)
     session.associate_diner(1, 2)
     return session
+
+
+@pytest.fixture(autouse=True)
+def block_real_network():
+    # מונעת מהבדיקות לפנות לרשת בטעות.
+    from unittest.mock import patch
+    with patch("requests.sessions.Session.request", side_effect=AssertionError("Tests must stay offline.")):
+        yield

@@ -3,6 +3,16 @@
 The business logic stays in bills_split; this file runs the example meal.
 """
 
+import asyncio
+import logging
+import sys
+from time import perf_counter
+
+from bills_split.api_client import ExchangeRateClient, DemoRateClient
+from bills_split.async_processing import collect_sequential, collect_concurrent
+from bills_split.threaded_processing import MenuStock, reserve_for_diners
+from bills_split.services import CurrencyQuoteService, PaymentService
+from bills_split.strategies import PercentageTip, NoTip
 from bills_split.models import Restaurant, Table, Diner, MockPaymentMethod, Order, OrderItem, MockPayment
 from bills_split.repository import MenuRepository
 from bills_split.processing import (
@@ -99,7 +109,61 @@ def show_pos_view(session):
     print(f"  Tips:        {snapshot['tips_cents'] / 100:>8.2f}")
 
 
-def main():
+def show_stage2(live=False):
+    # מדגימה את ההרחבות על ארוחה חדשה.
+    show_section(9, "Stage 2: availability, shared dish, and currency estimate")
+    repository = MenuRepository.from_jsonl("data/sample_data.jsonl")
+    jobs = [(repository.find(5), 0.06), (repository.find(13), 0.02), (repository.find(11), 0.04)]
+    started = perf_counter()
+    sequential = asyncio.run(collect_sequential(jobs))
+    sequential_time = perf_counter() - started
+    started = perf_counter()
+    concurrent = asyncio.run(collect_concurrent(jobs))
+    concurrent_time = perf_counter() - started
+    assert sequential == concurrent
+    print("  Availability: SIMULATED, input order preserved", concurrent)
+    print(f"  Sequential: {sequential_time:.3f}s | Concurrent: {concurrent_time:.3f}s")
+
+    restaurant = Restaurant(2, "Demo Bistro")
+    for item in repository.items:
+        restaurant.add_menu_item(item)
+    table = Table(2, 2, restaurant)
+    restaurant.add_table(table)
+    session = table.open_session(2)
+    for diner_id in (1, 2):
+        session.join(Diner(diner_id, f"Diner {diner_id}", MockPaymentMethod(diner_id, diner_id)))
+    stock = MenuStock(repository.find(5), 1)
+    reservations = reserve_for_diners(stock, [1, 2])
+    approved = [row for row in reservations if row["approved"]]
+    assert len(approved) == 1 and stock.remaining == 0
+    print(f"  Last dish: {len(approved)} reservation approved; stock left: {stock.remaining}")
+    order = Order(1)
+    order.add_item(OrderItem(1, stock.item))
+    session.add_order(order)
+    for diner_id in (1, 2):
+        session.associate_diner(1, diner_id)
+    print(f"  Include me: {len(session.find_item(1).participants)} participants share one dish")
+    show_balances(session)
+
+    client = ExchangeRateClient() if live else DemoRateClient("data/demo_rates.json")
+    quote = CurrencyQuoteService(client).quote(session, 1, "USD")
+    print("  Rate source:", "LIVE Frankfurter request" if live else "SIMULATED local rate")
+    if quote["available"]:
+        print(f"  Personal items: ILS {quote['amount_ils_cents'] / 100:.2f} ~ USD {quote['estimate']} (rate date: {quote['rate_date']})")
+        print("  Reference estimate only, before tip. The mock bill stays in ILS.")
+    else:
+        print(f"  Estimate unavailable ({quote['reason']}); keep the ILS bill, no substitute rate.")
+    PaymentService(PercentageTip(12)).pay(session, 1, 1)
+    PaymentService(NoTip()).pay(session, 2, 2)
+    for item in session.items:
+        while item.status != "served":
+            item.advance_status()
+    session.close()
+    show_payments(session)
+    print(f"  STAGE 2 COMPLETE | table {session.status} | outstanding: {session.outstanding_cents}")
+
+
+def main(live=False):
     # מריצה את הארוחה לדוגמה, מהתפריט ועד תשלום וסגירת השולחן.
     print("=" * 68)
     print("BillsSplit - Stage 1 local demonstration")
@@ -273,7 +337,11 @@ def main():
     print(f"  Unpaid items:     {session.outstanding_cents / 100:>8.2f}")
     print(f"  Mock tips:        {session.tips_cents / 100:>8.2f}")
     print("  Diner D consumed no items and was never charged.")
+    show_stage2(live)
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] not in ([], ["--live"]):
+        raise SystemExit("Usage: python main.py [--live]")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    main(live=sys.argv[1:] == ["--live"])
