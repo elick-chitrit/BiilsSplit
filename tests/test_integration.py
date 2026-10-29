@@ -5,7 +5,6 @@ import requests
 from bills_split.api_client import ExchangeRateClient
 from bills_split.services import CurrencyQuoteService, PaymentService
 from bills_split.strategies import PercentageTip, NoTip
-from bills_split.processing import local_pos_snapshot
 
 
 def test_quote_payment_serving_and_closure(meal):

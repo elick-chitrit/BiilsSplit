@@ -1,5 +1,9 @@
 from unittest.mock import Mock
 
+import pytest
+from requests.exceptions import Timeout, HTTPError
+from bills_split.api_client import InvalidJSONError, InvalidRateError
+
 from bills_split.services import CurrencyQuoteService
 
 
@@ -14,9 +18,6 @@ def test_quote_converts_only_the_diners_unpaid_share(meal):
     assert meal.payments == []
 
 
-import pytest
-from requests.exceptions import Timeout, HTTPError
-from bills_split.api_client import InvalidJSONError, InvalidRateError
 
 
 @pytest.mark.parametrize("failure, reason", [(Timeout(), "network"), (HTTPError(), "http"), (InvalidJSONError(), "json"), (InvalidRateError(), "data")])

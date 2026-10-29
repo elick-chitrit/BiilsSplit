@@ -54,24 +54,6 @@ Connect to Tabit in a later course stage, subject to authorized access and suppo
 | F - Git/GitHub | Changes pushed, PR #1 merged, and the repository is public; submission remains |
 | G - AI data and documentation | 18 synthetic records and usage documentation are included |
 
-## Files
-
-| File | What it contains |
-|---|---|
-| `main.py` | The full demo; no business classes are defined here |
-| `bills_split/models.py` | Business classes, relationships, validation, and payments |
-| `bills_split/processing.py` | Collections, grouping, sorting, queues, and the local POS view |
-| `bills_split/iterators.py` | The custom collection/iterator, generator, and lazy pipeline |
-| `bills_split/repository.py` | JSONL loading, object creation, and lookup by ID |
-| `bills_split/context_managers.py` | Timing an operation in normal and error cases |
-| `bills_split/__init__.py` | The package initializer |
-| `data/sample_data.jsonl` | 18 synthetic menu records |
-| `README.md` | Proposal, design choices, and run instructions |
-| `GUIDE_HE.md` | A short Hebrew companion guide to running the demo and understanding its output |
-| `AI_USAGE.md` | Tools used, data-generation request, and verification |
-| `.gitignore` | Files that should stay out of Git |
-| `pyproject.toml` | Project metadata, Python requirement, and an empty dependency list |
-
 ## Model and design choices
 
 Each function and method starts with a short Hebrew comment explaining its purpose.
@@ -158,50 +140,84 @@ The resulting small menu is kept in a list. Reading line by line does not mean t
 
 The demo measures a normal operation and a checkout with an invalid tip. Both finish timing, but the invalid checkout still raises `ValueError`. A timer can be reused after finishing; nesting the same timer is rejected.
 
-## Running the demo
+## Stage 1 demo results
 
-Python 3.10 or later is required. The full run was verified with Python 3.13.7. Only the standard library is used, so there are no packages to install.
-
-From the `BiilsSplit` root folder:
-
-```sh
-python3 --version
-python3 main.py
-```
-
-For a new checkout:
-
-```sh
-git clone https://github.com/elick-chitrit/BiilsSplit.git
-cd BiilsSplit
-python3 main.py
-```
-
-Run from the repository root so `data/sample_data.jsonl` can be found. The demo runs once, prints the results, and exits. There is no interactive menu.
-
-The run shows the menu, table membership, orders, validation, collections, both queues, independent iterators, generators, the two-result pipeline, timed operations, mock payments, and a later order.
-
-The terminal output has eight numbered sections and aligned tables for the menu, ordered items and participants, diner shares/paid amounts/balances, mock receipts, and local POS status. Expected validation failures are marked `PASS - Rejected`, followed by the reason. The final `DEMO COMPLETE` section shows the closed table, total item bill, zero unpaid balance, and mock tips. All values are still produced by the same business model.
-
-Diners A-D initially owe **32.51, 78.00, 37.50, and 0.00**. The shared 19.01 starter splits into 9.51 and 9.50. After an extra 17.00 drink, the item total is **165.01**, unpaid balances are **0.00**, tips total **10.29**, and the table closes. The diner who did not consume anything is never charged. Printed rejection messages are intentional examples of invalid inputs.
+The first eight sections cover the original menu, orders, validation, collections, queues, iterators, generators, timing, payments, and closure. Diners A-D initially owe **32.51, 78.00, 37.50, and 0.00**. After the later order, the item bill is **165.01**, the unpaid balance is **0.00**, and tips total **10.29**. Expected rejection messages are intentional. Stage 2 follows in section 9; installation and commands are below.
 
 ## Local Tabit simulation
 
 `local_pos_snapshot` returns the current orders, fulfillment/payment states, receipts, diner balances, and table totals. A new call reflects changes; an older snapshot stays unchanged. Payment states are `unallocated`, `unpaid`, `partially_mock_paid`, and `mock_paid`.
 
-Tabit is the future integration target. This demo does not send data to restaurant computers or use a real API. The QR reference is also a mock label. It demonstrates the business flow locally.
+Tabit is the future integration target. This demo does not send data to restaurant computers or use a real Tabit API. The QR reference is also a mock label. It demonstrates the business flow locally.
 
-## Verification and submission
+## Stage 1 verification
 
-The model/processing checks passed 138 checks, and Part D passed another 105. The full demo also ran successfully. The final model review also checked price updates in all three menu classes and diners with missing, active, and inactive mock payment methods. After the identifier correction, all 243 existing checks passed again. Another 160 invalid-identifier operations were rejected without state changes, and 800 allocation/settlement scenarios conserved every cent and charged nonparticipants zero. The full demo passed with the new identifier-rejection examples. Closure checks also passed for nine combinations of fulfillment states and a served-but-unpaid table. The demo now shows that a fully paid table stays open until every item is served. Invalid test data and development scripts stay outside the project; the submitted sample file contains valid records only.
+The existing development checks still pass: models and processing, iterators and loading, invalid identifiers, allocation rounding, and closure. The original model review was merged in [PR #1](https://github.com/elick-chitrit/BiilsSplit/pull/1). The repository is public and the original commit history is preserved.
 
-The project files are in GitHub. I keep changes small and make a commit and push after each completed, verified task, including separate meaningful changes in the same file. The target is at least nine meaningful commits; the course requires at least seven.
+## Stage 2
 
-The final model updates were checked in [Pull Request #1](https://github.com/elick-chitrit/BiilsSplit/pull/1) and merged into `main`. The history exceeds nine meaningful commits. The original commits were preserved during the merge.
+### 1. What I added
 
-The repository is public and can be viewed without a GitHub invitation.
+Diners can see an estimate of their unpaid item share in another currency before choosing a tip. I also added independent availability checks and protected reservations for limited dishes. Reserving one dish does not stop friends from sharing it: only diners who join that item split its price. Payments stay synthetic and in ILS; Tabit stays a local simulation. This is an individual submission with instructor approval.
 
-Before submission:
+### 2. How to run
 
-- Include the current `git log --oneline --graph --all` output in the submission.
-- Submit the repository link and required materials through the course submission system.
+Python 3.10+; verified with 3.13.7. Run from the repository root:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[test]'
+python main.py            # offline demo, synthetic rates
+python main.py --live     # real reference-rate request
+python -m pytest -q       # offline tests
+```
+
+No API key or environment variables are needed. Settings are in `config.py`. No `.env.example` is needed for this service; `.env` files are ignored. The demo labels live and simulated data and has no interactive menu.
+
+### 3. Code organization
+
+```text
+BiilsSplit/
+  main.py                      # original demo and Stage 2 flow
+  pyproject.toml               # Python requirement, requests, pytest, packaging
+  .gitignore                   # local environments, caches, and secrets
+  bills_split/
+    __init__.py                # package initializer
+    models.py                  # menu, tables, sharing, mock payments
+    repository.py              # JSONL loading and item lookup
+    factories.py               # create food or drink items from records
+    strategies.py              # percentage, manual, or no tip
+    services.py                # checkout and personal currency estimates
+    api_client.py              # real/demo rate clients and response validation
+    config.py                  # endpoint, timeout, retry, supported currencies
+    async_processing.py        # sequential/concurrent availability checks
+    threaded_processing.py     # shared stock and protected reservations
+    processing.py              # collections, queues, local POS view
+    iterators.py                # iterator and lazy processing
+    context_managers.py        # operation timing
+  data/
+    sample_data.jsonl          # synthetic menu
+    demo_rates.json            # synthetic offline reference rates
+  tests/                       # models, patterns, API, services, concurrency, integration
+  README.md                    # requirements, design, commands, evidence
+  GUIDE_HE.md                  # short Hebrew guide
+  AI_USAGE.md                  # assistance and verification record
+```
+
+### 4. Main design decisions
+
+- **External service:** [Frankfurter v2 documentation](https://frankfurter.dev/). GET `/v2/rates` with `base=ILS`, `quotes=USD` (also EUR/GBP), and a connection/read timeout. The client checks HTTP status, JSON, currencies, a positive finite rate, and a nonempty date. The service converts only the diner's unpaid item share, before tip. This is a dated reference estimate, not a payment exchange rate.
+- **Failures:** retry only Timeout/ConnectionError, up to three total attempts, with a wait between attempts. HTTP, malformed JSON, and invalid fields are distinct failures and are not retried. If the request fails, the estimate is unavailable; the original ILS bill and checkout remain usable. Live mode never silently substitutes demo rates. Logs contain request attempts and failure categories, without diner/payment details.
+- **Factory:** `menu_item_from_dict` creates FoodItem or DrinkItem from input. The loader delegates creation to this single location.
+- **Strategy:** PercentageTip, ManualTip, and NoTip share `calculate`. PaymentService receives its strategy; CurrencyQuoteService receives its rate client. The real client also accepts request/wait dependencies. This keeps calculation, communication, and coordination separate and lets tests replace dependencies.
+- **Async:** three independent menu checks simulate waiting with `asyncio.sleep`. Sequential and `gather` versions use identical inputs and return input-order results, even if completion order differs. No blocking requests run inside async functions.
+- **Threads:** two reservation threads share one MenuStock and one Lock. Both start before joining. The lock protects the stock check, decrement, and reservation record together. Without it, both could see one remaining dish and both approve it. Tests check approval count and final stock, not which diner wins. Orders are created afterward in the main thread; ordinary session operations are not claimed to be thread-safe. Sharing remains a separate action.
+
+### 5. Evidence
+
+- **55 pytest cases passed** on Python 3.13.7. Tests cover Stage 1 regressions, tip alternatives, factories, files with `tmp_path`, API errors/retry, async ordering, protected stock, and a complete checkout. Fixtures, parametrization, `pytest.raises`, Mock, and patch are used. Real HTTP is blocked in the test suite and retry waits are replaced.
+- **Live run, 2026-10-29:** `python main.py --live` completed. Frankfurter returned an ILS/USD rate of **0.32121**, dated **2026-10-29**. A personal item balance of **ILS 9.00** displayed **USD 2.89**. Mock checkout then closed the table with zero outstanding balance. Future reference rates may differ.
+- **TDD - personal currency estimate:** [Red](https://github.com/elick-chitrit/BiilsSplit/commit/fe1d718) failed because quote behavior was missing; [Green](https://github.com/elick-chitrit/BiilsSplit/commit/d70c4da) implemented conversion; [Refactor](https://github.com/elick-chitrit/BiilsSplit/commit/4353761) separated quote formatting from session coordination. The same test passed after both later steps. All final tests pass.
+
+Submit the repository link through the course system. Stage 2 does not require a separate Git log file.
