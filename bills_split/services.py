@@ -20,10 +20,15 @@ class CurrencyQuoteService:
         # מציגה אומדן של החלק האישי במטבע אחר.
         amount = session.diner_owed_cents(diner_id)
         rate = self.client.fetch_rate(currency)
-        return {
-            "available": True,
-            "amount_ils_cents": amount,
-            "currency": currency,
-            "estimate": f"{amount / 100 * rate['rate']:.2f}",
-            "rate_date": rate["date"],
-        }
+        return build_currency_quote(amount, rate)
+
+
+def build_currency_quote(amount_cents, rate):
+    # בונה אומדן לתצוגה בלי לגעת בתשלום.
+    return {
+        "available": True,
+        "amount_ils_cents": amount_cents,
+        "currency": rate["quote"],
+        "estimate": f"{amount_cents / 100 * rate['rate']:.2f}",
+        "rate_date": rate["date"],
+    }
