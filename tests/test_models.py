@@ -75,3 +75,23 @@ def test_invalid_tip_does_not_record_payment(meal):
     assert meal.payments == []
     assert meal.outstanding_cents == 1901
     assert not meal.find_item(1).locked
+
+
+def test_user_defined_shared_fries_rule(meal):
+    # בודקת שרק מי שהצטרף מתחלק במנה.
+    fries = FoodItem(2, "Fries", 3000)
+    meal.table.restaurant.add_menu_item(fries)
+    order = Order(2)
+    order.add_item(OrderItem(2, fries))
+    meal.add_order(order)
+    meal.associate_diner(2, 1)
+    meal.associate_diner(2, 2)
+    assert len(meal.find_item(2).participants) == 2
+    assert [meal.diner_item_owed_cents(2, i) for i in (1, 2, 3)] == [1500, 1500, 0]
+
+
+def test_user_defined_personal_tip_rule():
+    # בודקת את הדוגמה שנבחרה לטיפ אישי.
+    tip = MockPayment.calculate_tip(10000, 12)
+    assert tip == 1200
+    assert 10000 + tip == 11200
