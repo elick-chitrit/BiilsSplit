@@ -5,6 +5,9 @@ The QR reference, POS state, and payments are local mock data.
 """
 
 
+from .strategies import select_tip_strategy
+
+
 def _integer(value, field, minimum=1):
     # בודקת שהערך הוא מספר שלם בטווח המותר, ולא ערך בוליאני.
     if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
@@ -603,17 +606,7 @@ class MockPayment:
     def calculate_tip(amount_cents, option="None", manual_tip_cents=None):
         # מחשבת טיפ באחוזים או בסכום ידני, ומעגלת לאגורה כשצריך.
         _integer(amount_cents, "Tip base", 0)
-        if option == "Other":
-            return _integer(manual_tip_cents, "Manual tip", 0)
-        if manual_tip_cents is not None:
-            raise ValueError("A manual amount is accepted only with Other.")
-        if option == "None":
-            return 0
-        _integer(option, "Tip percentage")
-        if option not in (10, 12, 15, 20):
-            raise ValueError("Choose 10, 12, 15, 20, Other, or None.")
-        # Round the tip to a cent, with halves rounded up.
-        return (amount_cents * option + 50) // 100
+        return select_tip_strategy(option, manual_tip_cents).calculate(amount_cents)
 
     @property
     def id(self):
@@ -856,7 +849,7 @@ class TableSession:
             return "partially_mock_paid"
         return "unpaid"
 
-    def pay(self, payment_id, diner_id, tip_option="None", manual_tip_cents=None):
+    def pay(self, payment_id, diner_id, tip_option="None", manual_tip_cents=None, *, tip_strategy=None):
         # רושמת תשלום מוקאפ ליתרה ולטיפ, ונועלת את החלוקה.
         self._require_open()
         _integer(payment_id, "Mock payment ID")
@@ -871,7 +864,12 @@ class TableSession:
         amount = self.diner_owed_cents(diner_id)
         if amount <= 0:
             raise ValueError("This diner has no outstanding item balance.")
-        tip = MockPayment.calculate_tip(amount, tip_option, manual_tip_cents)
+        if tip_strategy is not None:
+            if tip_option != "None" or manual_tip_cents is not None:
+                raise ValueError("Choose a tip strategy or a tip option, not both.")
+            tip = tip_strategy.calculate(amount)
+        else:
+            tip = MockPayment.calculate_tip(amount, tip_option, manual_tip_cents)
         allocations = {}
         for item in self.items:
             owed = self.diner_item_owed_cents(item.id, diner.id)
